@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import TarjetaPersonaje from '../assets/componentes/tarjeta.jsx'
+import TarjetaPersonaje from '../componentes/tarjeta.jsx'
+import Cabecera from '../componentes/pag/Cabecera.jsx'
+import Buscar from '../componentes/pag/Buscar.jsx'
+import {
+  EstadoCarga,
+  EstadoError,
+  EstadoSinResultados,
+} from '../componentes/pag/EstadosBusqueda.jsx'
+import PiePagina from '../componentes/pag/PiePagina.jsx'
 import { buscarPersonaje } from '../services/anilist.js'
-import '../App.css'
 
-const RECOMENDACIONES = ['Monkey D. Luffy', 'Naruto Uzumaki', 'Goku']
-
-export default function AnimeFinder() {
+export default function AnimeFinder({ onNavigate }) {
   const [nombre, setNombre] = useState('')
   const [personaje, setPersonaje] = useState(null)
   const [busqueda, setBusqueda] = useState('')
@@ -45,7 +50,7 @@ export default function AnimeFinder() {
     }
   }, [nombre, solicitud])
 
-  function cambiarNombre(valor) {
+  function actualizarNombre(valor) {
     const consulta = valor.trim()
     const mismaConsulta = consulta && consulta === nombre.trim()
     idPeticion.current += 1
@@ -57,9 +62,9 @@ export default function AnimeFinder() {
     if (mismaConsulta) setSolicitud((actual) => actual + 1)
   }
 
-  function buscar(event) {
-    event.preventDefault()
+  function ejecutarBusqueda() {
     if (!nombre.trim()) return
+    onNavigate('/buscar')
     idPeticion.current += 1
     setBusqueda(nombre.trim())
     setPersonaje(null)
@@ -70,80 +75,34 @@ export default function AnimeFinder() {
 
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="AnimeFinder, inicio">
-          <span className="brand-mark" aria-hidden="true">ア</span>
-          <span>ANIME<span className="brand-accent">FINDER</span></span>
-        </a>
-      </header>
+      <Cabecera onNavigate={onNavigate} />
 
       <section className="hero">
         <h1>¿Quién es tu<br /><span>personaje favorito?</span></h1>
-
-        <form className="search-form" onSubmit={buscar}>
-          <label className="visually-hidden" htmlFor="character-name">
-            Nombre del personaje
-          </label>
-          <span className="search-icon" aria-hidden="true">⌕</span>
-          <input
-            id="character-name"
-            type="search"
-            placeholder="Ej. Tanjiro Kamado..."
-            value={nombre}
-            onChange={(event) => cambiarNombre(event.target.value)}
-          />
-          <button type="submit" disabled={!nombre.trim()}>
-            {cargando ? 'Buscando...' : 'Buscar personaje'}
-            {!cargando && <span aria-hidden="true">↗</span>}
-          </button>
-        </form>
-
+        <Buscar
+          nombre={nombre}
+          cargando={cargando}
+          onBuscar={ejecutarBusqueda}
+          onCambiarNombre={actualizarNombre}
+        />
       </section>
 
       <section className="results" aria-live="polite">
-        {cargando && (
-          <div className="status-message">
-            <span className="loader" aria-hidden="true" />
-            <p>Buscando a <strong>{busqueda}</strong> en el universo anime...</p>
-          </div>
-        )}
+        {cargando && <EstadoCarga busqueda={busqueda} />}
 
-        {!cargando && error && (
-          <div className="feedback error-message" role="alert">
-            <span aria-hidden="true">!</span>
-            <div><h2>Algo salió mal</h2><p>{error}</p></div>
-          </div>
-        )}
+        {!cargando && error && <EstadoError error={error} />}
 
         {!cargando && personaje && <TarjetaPersonaje personaje={personaje} />}
 
         {!cargando && !error && !personaje && busqueda && (
-          <div className="feedback empty-state">
-            <span className="empty-icon" aria-hidden="true">?</span>
-            <div>
-              <p className="eyebrow">NO ENCONTRAMOS RESULTADOS</p>
-              <h2>No encontramos a “{busqueda}”</h2>
-              <p>Prueba con uno de estos personajes:</p>
-              <div className="recommendations">
-                {RECOMENDACIONES.map((sugerencia) => (
-                  <button
-                    className="recommendation"
-                    key={sugerencia}
-                    onClick={() => cambiarNombre(sugerencia)}
-                    type="button"
-                  >
-                    {sugerencia}<span aria-hidden="true">↗</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <EstadoSinResultados
+            busqueda={busqueda}
+            onSeleccionar={actualizarNombre}
+          />
         )}
       </section>
 
-      <footer className="footer">
-        <span>Datos de personajes por <a href="https://anilist.co/" target="_blank" rel="noreferrer">AniList</a></span>
-      </footer>
+      <PiePagina />
     </main>
   )
 }
