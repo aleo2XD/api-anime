@@ -1,4 +1,11 @@
-import { obtenerEstado } from './tarjeta.js'
+function obtenerEstado(descripcion) {
+  if (!descripcion) return 'Desconocido'
+
+  const texto = descripcion.toLowerCase()
+  if (/\b(muerto|dead|deceased|fallecido)\b/.test(texto)) return 'Muerto'
+  if (/\b(vivo|alive)\b/.test(texto)) return 'Vivo'
+  return 'Desconocido'
+}
 
 function TarjetaPersonaje({ personaje }) {
   const estado = obtenerEstado(personaje.about)

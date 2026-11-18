@@ -1,5 +1,3 @@
-import axios from 'axios'
-
 const ANILIST_API_URL = 'https://graphql.anilist.co'
 
 const PERSONAJE_QUERY = `
@@ -33,34 +31,33 @@ const PERSONAJE_QUERY = `
 `
 
 export async function buscarPersonaje(nombre, { signal } = {}) {
-  const respuesta = await axios.post(
-    ANILIST_API_URL,
-    {
+  const respuesta = await fetch(ANILIST_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
       query: PERSONAJE_QUERY,
       variables: { search: nombre },
-    },
-    { signal },
-  )
+    }),
+    signal,
+  })
+  const resultado = await respuesta.json()
 
-  if (respuesta.data.errors?.length) {
-    throw new Error(respuesta.data.errors.map(({ message }) => message).join('; '))
+  if (!respuesta.ok || resultado.errors?.length) {
+    const mensaje = resultado.errors?.map(({ message }) => message).join('; ')
+    throw new Error(mensaje || `AniList respondió con el estado ${respuesta.status}`)
   }
 
-  const personaje = respuesta.data.data?.Character
+  const personaje = resultado.data?.Character
   if (!personaje) return null
 
-  const animes = [...new Map(
-    (personaje.media?.edges ?? [])
-      .filter(({ node }) => node?.type === 'ANIME')
-      .map(({ node }) => [
-        node.id,
-        {
-          id: node.id,
-          title: node.title.english || node.title.romaji || node.title.native,
-        },
-      ])
-      .filter(([, anime]) => anime.title),
-  ).values()]
+  const animes = (personaje.media?.edges ?? [])
+    .map(({ node }) => node)
+    .filter((node) => node?.type === 'ANIME')
+    .map(({ id, title }) => ({
+      id,
+      title: title.english || title.romaji || title.native,
+    }))
+    .filter((anime) => anime.title)
 
   return {
     id: personaje.id,
