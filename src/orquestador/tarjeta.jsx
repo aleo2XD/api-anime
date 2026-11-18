@@ -1,14 +1,8 @@
 function obtenerEstado(descripcion) {
-  if (!descripcion) return 'Desconocido'
-
   const texto = descripcion.toLowerCase()
-  if (/\b(muerto|dead|deceased|fallecido)\b/.test(texto)) return 'Muerto'
-  if (/\b(vivo|alive)\b/.test(texto)) return 'Vivo'
-  return 'Desconocido'
 }
 
 function TarjetaPersonaje({ personaje }) {
-  const estado = obtenerEstado(personaje.about)
   const animes = [...new Map(
     personaje.animes.map((anime) => [anime.id, anime]),
   ).values()].slice(0, 3)
@@ -22,7 +16,6 @@ function TarjetaPersonaje({ personaje }) {
           alt={`Imagen de ${personaje.name}`}
           loading="lazy"
         />
-        <span className="image-label">PERSONAJE</span>
       </div>
       <div className="character-info">
         <p className="eyebrow"><span className="eyebrow-line" /> FICHA DEL PERSONAJE</p>
@@ -31,9 +24,6 @@ function TarjetaPersonaje({ personaje }) {
           <p className="character-kanji">{personaje.name_kanji}</p>
         )}
         <div className="character-status">
-          <span className={`status-dot ${estado === 'Vivo' ? 'is-alive' : ''}`} />
-          <span>Estado:</span>
-          <strong>{estado}</strong>
         </div>
 
         <div className="anime-section">
@@ -42,7 +32,6 @@ function TarjetaPersonaje({ personaje }) {
             <ul className="anime-list">
               {animes.map((anime) => (
                 <li key={anime.id}>
-                  <span className="anime-bullet" aria-hidden="true">✦</span>
                   {anime.title}
                 </li>
               ))}
