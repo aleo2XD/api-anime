@@ -16,7 +16,7 @@ export default function useBusquedaPersonaje() {
       clearTimeout(timer.current)
       controller.current?.abort()
     }
-  }, [])
+  }, )
 
   function programarBusqueda(valor, espera = 500) {
     const consulta = valor.trim()
